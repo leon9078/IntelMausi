@@ -1,5 +1,11 @@
 IntelMausi Changelog
 ====================
+#### v1.0.9
+- Reworked WoL from S5 implementation, thx @jpz4085:
+  - WoL from S5 is now following macOS "Wake for network access" or pmset "womp" setting
+  - To disable it entirely at boot (regardless of macOS), add `mausi-disable-wol-from-s5` device property or `-mausinowols5` boot-arg
+  - Removed `mausi-force-wol` device property and `-mausiwol` boot argument
+
 #### v1.0.8
 - Minor fixes found by static analysis
 

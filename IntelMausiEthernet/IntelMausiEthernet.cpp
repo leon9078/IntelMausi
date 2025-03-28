@@ -193,6 +193,7 @@ bool IntelMausi::init(OSDictionary *properties)
         isRssSet = false;
         wolCapable = false;
         wolActive = false;
+        wolPwrOff = true;
         enableCSO6 = false;
         pciPMCtrlOffset = 0;
         maxLatency = 0;
@@ -253,16 +254,7 @@ void IntelMausi::free()
 
 bool IntelMausi::start(IOService *provider)
 {
-    int tmp = 0;
     bool result;
-
-    if (!PE_parse_boot_argn("-mausiwol", &tmp, sizeof(tmp))) {
-        tmp = provider->getProperty("mausi-force-wol") != nullptr;
-    }
-
-    if (tmp != 0) {
-        wolCapable = wolActive = true;
-    }
 
     result = super::start(provider);
 
@@ -323,6 +315,13 @@ bool IntelMausi::start(IOService *provider)
         IOLog("[IntelMausi]: attachInterface() failed.\n");
         goto error4;
     }
+
+    if (PE_parse_boot_argn("-mausinowols5", NULL, 0) ||
+        pciDevice->getProperty("mausi-disable-wol-from-s5"))
+    {
+        wolPwrOff = false;
+    }
+
     pciDevice->close(this);
     result = true;
 
@@ -437,6 +436,7 @@ void IntelMausi::systemWillShutdown(IOOptionBits specifier)
     DebugLog("[IntelMausi]: systemWillShutdown() ===>\n");
 
     if ((kIOMessageSystemWillPowerOff | kIOMessageSystemWillRestart) & specifier) {
+        setWakeOnLanFromShutdown();
         disable(netif);
 
         /* Restore the original MAC address. */
@@ -1531,6 +1531,29 @@ IOReturn IntelMausi::setWakeOnMagicPacket(bool active)
     DebugLog("[IntelMausi]: setWakeOnMagicPacket() <===\n");
 
     return result;
+}
+
+void IntelMausi::setWakeOnLanFromShutdown()
+{
+    DebugLog ("setWakeOnLanFromShutdown() ===>\n");
+
+    if (wolCapable && wolPwrOff) {
+        unsigned long wakeSetting = 0;
+
+        getAggressiveness(kPMEthernetWakeOnLANSettings, &wakeSetting);
+
+        if (kIOEthernetWakeOnMagicPacket & wakeSetting) {
+            wolActive = true;
+            DebugLog("[IntelMausi]: Wake on magic packet enabled.\n");
+        }
+        if (!isEnabled && wolActive) {
+            intelEnable();
+            intelDisable();
+            DebugLog("[IntelMausi]: Wake on LAN from shutdown active.\n");
+        }
+    }
+
+    DebugLog ("setWakeOnLanFromShutdown() <===\n");
 }
 
 IOReturn IntelMausi::getPacketFilters(const OSSymbol *group, UInt32 *filters) const

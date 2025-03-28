@@ -9,7 +9,7 @@ as well as kernel debugging support initially provided by [aerror2](https://gith
 [IntelMausiEthernetWithKernelDebugger](https://github.com/aerror2/IntelMausiEthernetWithKernelDebugger)
 repository. Do use the original version when uncertain. No support or troubleshooting provided.
 
-Wake on LAN functionality should work out of the box. On misconfigured hardware one may try to force-enable it by injecting `mausi-force-wol` device property (with any value, recommended), or `-mausiwol` boot argument (for testing purposes).
+In macOS, Wake on LAN from sleep is controlled by the system setting "Wake for network access" or pmset "womp". The same is applied by default for WoL from shutdown. This feature can be disabled entirely at boot by injecting `mausi-disable-wol-from-s5` device property (with any value, recommended), or `-mausinowols5` boot argument (for testing purposes).
 
 ---
 
