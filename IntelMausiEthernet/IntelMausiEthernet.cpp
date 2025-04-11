@@ -193,7 +193,8 @@ bool IntelMausi::init(OSDictionary *properties)
         isRssSet = false;
         wolCapable = false;
         wolActive = false;
-        wolPwrOff = true;
+        wolPwrOff = false;
+        mausiwoloverride = false;
         enableCSO6 = false;
         pciPMCtrlOffset = 0;
         maxLatency = 0;
@@ -316,10 +317,8 @@ bool IntelMausi::start(IOService *provider)
         goto error4;
     }
 
-    if (PE_parse_boot_argn("-mausinowols5", NULL, 0) ||
-        pciDevice->getProperty("mausi-disable-wol-from-s5"))
-    {
-        wolPwrOff = false;
+    if (PE_parse_boot_argn("mausi-wol-override", &mausiwoloverride, sizeof(mausiwoloverride))) {
+        wolPwrOff = true;
     }
 
     pciDevice->close(this);
@@ -1535,25 +1534,35 @@ IOReturn IntelMausi::setWakeOnMagicPacket(bool active)
 
 void IntelMausi::setWakeOnLanFromShutdown()
 {
-    DebugLog ("setWakeOnLanFromShutdown() ===>\n");
+    DebugLog ("[IntelMausi]: setWakeOnLanFromShutdown() ===>\n");
 
-    if (wolCapable && wolPwrOff) {
-        unsigned long wakeSetting = 0;
+    if (wolCapable) {
+        if (!wolPwrOff) {
+            unsigned long wakeSetting = 0;
 
-        getAggressiveness(kPMEthernetWakeOnLANSettings, &wakeSetting);
+            getAggressiveness(kPMEthernetWakeOnLANSettings, &wakeSetting);
 
-        if (kIOEthernetWakeOnMagicPacket & wakeSetting) {
-            wolActive = true;
-            DebugLog("[IntelMausi]: Wake on magic packet enabled.\n");
-        }
-        if (!isEnabled && wolActive) {
-            intelEnable();
-            intelDisable();
-            DebugLog("[IntelMausi]: Wake on LAN from shutdown active.\n");
+            if (kIOEthernetWakeOnMagicPacket & wakeSetting) {
+                wolActive = true;
+                DebugLog("[IntelMausi]: Wake on magic packet enabled.\n");
+            }
+            if (!isEnabled && wolActive) {
+                intelEnable();
+                intelDisable();
+                DebugLog("[IntelMausi]: Wake on LAN from shutdown active.\n");
+            }
+        } else {
+            wolActive = mausiwoloverride;
+            DebugLog("[IntelMausi]: Wake on magic packet %s.\n", wolActive ? "enabled" : "disabled");
+            if (!isEnabled && wolActive) {
+                intelEnable();
+                intelDisable();
+                DebugLog("[IntelMausi]: Wake on LAN from shutdown active.\n");
+            }
         }
     }
 
-    DebugLog ("setWakeOnLanFromShutdown() <===\n");
+    DebugLog ("[IntelMausi]: setWakeOnLanFromShutdown() <===\n");
 }
 
 IOReturn IntelMausi::getPacketFilters(const OSSymbol *group, UInt32 *filters) const

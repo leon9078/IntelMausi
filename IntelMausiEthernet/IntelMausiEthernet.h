@@ -549,6 +549,7 @@ private:
     bool wolCapable;
     bool wolActive;
     bool wolPwrOff;
+    bool mausiwoloverride;
     bool enableCSO6;
     bool enableWoM;
 
