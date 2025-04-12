@@ -2586,7 +2586,7 @@ bool IntelMausi::intelStart()
          e1000e_get_hw_control(adapter);
      */
 
-    DebugLog("[IntelMausi]: %s (Rev. %u), %02x:%02x:%02x:%02x:%02x:%02x\n",
+    DebugLog("[IntelMausi]: %s (Rev. %u), %02X:%02X:%02X:%02X:%02X:%02X\n",
           deviceTable[chip].deviceName, pciDeviceData.revision,
           mac->addr[0], mac->addr[1], mac->addr[2], mac->addr[3], mac->addr[4], mac->addr[5]);
     result = true;

@@ -448,7 +448,8 @@ private:
     void timerAction(IOTimerEventSource *timer);
 
     /* Set wolActive prior to shutdown or restart to support WoL from S5
-     * if "Wake for network access" or "womp" is enabled and run the hardware
+     * if "Wake for network access" or "womp" is enabled or mausi-wol-override=1
+     * is set via boot-args and run the hardware
      * enable/disable routines if the controller is already disabled.
      */
     void setWakeOnLanFromShutdown();
